@@ -32,3 +32,4 @@ $veraCryptSource = "C:\Users\Test\Downloads\page2.backup"
 ## Notes
 * I programmed the script to back up a full volume to another volume, nevertheless the script can back up from one folder to another, but keep in mind that the logpath may be al little bit long.
 * Only a full backup deletes the logs. A differential backup keeps the logs in every case.
+* When you use VeraCrypt in your backup the `$backuplocation` can only be one volumeletter e.g. `W:\`
