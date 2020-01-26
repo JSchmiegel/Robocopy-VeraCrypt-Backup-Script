@@ -1,12 +1,12 @@
 #Parameters:
-$sourcelocation = "C:\Users\Jonas\Downloads\Page1\" # "J:\"
-$backuplocation = "C:\Users\Jonas\Downloads\Page2\"# "W:\"
-$logpath = "C:\Users\Jonas\Downloads\Logs\" # "J:\000Logs\"
+$sourcelocation = "J:\"
+$backuplocation = "W:\"
+$logpath = "J:\000Logs\"
 $silentlyEndScript = $true
 $deleteOldLogs = $true
 
 
-$volumes = @(Get-Volume | foreach {$_.DriveLetter})
+$volumes = @(Get-Volume | ForEach-Object {$_.DriveLetter})
 $date = Get-Date -UFormat "%Y%m%d"
 $lastbackuplocation = $backuplocation + $date
 
