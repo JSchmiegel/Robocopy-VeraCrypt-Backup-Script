@@ -156,6 +156,10 @@ if (Test-Path $backuplocation){
 	}
 }
 
+#encrypt VeraCrypt container/volume again
+$veraCryptLetter = $($backuplocation.Replace("\","")).Replace(":","")
+C:\Instanzen\VeraCrypt\VeraCrypt.exe /q /d $veraCryptLetter
+
 if(!$silentlyendScript)
 {
 	Read-Host "Please enter a key to end the script"
