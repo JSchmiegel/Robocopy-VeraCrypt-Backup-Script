@@ -5,8 +5,10 @@ $logpath = "J:\000Logs\"
 $silentlyEndScript = $true
 $deleteOldLogs = $true
 
+$veraCryptBackup = $false
+$veraCryptSource = "C:\Users\Test\Downloads\page2.backup"
 
-$volumes = @(Get-Volume | ForEach-Object {$_.DriveLetter})
+
 $date = Get-Date -UFormat "%Y%m%d"
 $lastbackuplocation = $backuplocation + $date
 
@@ -38,7 +40,22 @@ function getvalideInput ($inputmessage, $ControllRegex)
 	return $input
 }
 
+function decryptVeraCrypt ($veraCryptSource, $backuplocation){
+	$veraCryptLetter = $($backuplocation.Replace("\","")).Replace(":","")
+	#opens VeraCrypt Window
+	C:\Instanzen\VeraCrypt\VeraCrypt.exe /quit /volume $veraCryptSource /letter $veraCryptLetter
+	#wait until volume is decrypted
+	Write-Host "Waiting for the decryption of a VeraCrypt volume ..."
+	while(!(Test-Path $backuplocation)){
+    	Start-Sleep -Milliseconds 50
+	}
+}
+
 #MAIN
+if($veraCryptBackup)
+{
+	decryptVeraCrypt $veraCryptSource $backuplocation
+}
 if (Test-Path $backuplocation){
 	Write-Host ""
 	Write-Host "Today is the: " $($date[6] + $date[7] + "." + $date[4] + $date[5] + "." + $date[0] + $date[1] + $date[2] + $date[3])
@@ -131,6 +148,7 @@ if (Test-Path $backuplocation){
 
 }else 
 {
+	$volumes = @(Get-Volume | ForEach-Object {$_.DriveLetter})
 	Write-Host "Volume" $backuplocation "does not exist."
 	Write-Host "Existing Volumes are:"
 	foreach ($volume in $volumes) {
