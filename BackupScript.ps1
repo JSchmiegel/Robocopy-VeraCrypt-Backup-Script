@@ -52,12 +52,12 @@ function decryptVeraCrypt ($veraCryptSource, $backuplocation){
 }
 
 #MAIN
+if($veraCryptBackup -and !(Test-Path $backuplocation))
+{
+	decryptVeraCrypt $veraCryptSource $backuplocation
+}
+
 if (Test-Path $backuplocation){
-	if($veraCryptBackup)
-	{
-		decryptVeraCrypt $veraCryptSource $backuplocation
-	}
-	
 	Write-Host ""
 	Write-Host "Today is the: " $($date[6] + $date[7] + "." + $date[4] + $date[5] + "." + $date[0] + $date[1] + $date[2] + $date[3])
 	Write-Host ""
