@@ -17,7 +17,7 @@ Start the script with the parameter: `-pathconf "param.conf"`
 1. Create a shortcut
 2. Edit the `Properties` of the shortcut:
 ```
-C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -ExecutionPolicy Bypass -File "<filepath>" -pathconf "publicparam.conf"
+C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -ExecutionPolicy Bypass -File ".\BackupScript.ps1" -pathconf "param.conf"
 ```
 3. Define the `Start in` path. Set for example the path of the script
 
