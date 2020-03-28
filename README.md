@@ -24,7 +24,7 @@ C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -ExecutionPolicy Bypas
 ### **Parameters:**
 Before using you must set the parameters in the parameter file: `param.conf`
 ```Powershell
-#publicparam.conf:
+#param.conf:
 
 #Source location
 confSourceLocation=C:\
