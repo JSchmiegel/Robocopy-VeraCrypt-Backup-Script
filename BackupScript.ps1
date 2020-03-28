@@ -1,12 +1,23 @@
 #Parameters:
-$sourcelocation = "J:\"
-$backuplocation = "W:\"
-$logpath = "J:\000Logs\"
-$silentlyEndScript = $true
-$deleteOldLogs = $true
+param([string]$pathconf)
+Get-Content $pathconf | foreach-object -begin {$h=@{}} -process { $k = [regex]::split($_,'='); if(($k[0].CompareTo("") -ne 0) -and ($k[0].StartsWith("[") -ne $True)) { $h.Add($k[0], $k[1]) } }
+$sourcelocation = $h.Get_Item("confSourceLocation")
+$backuplocation = $h.Get_Item("confBackupLocation")
+$logpath = $h.Get_Item("confLogPath")
+$silentlyEndScript = $h.Get_Item("confSilentlyEndScript")
+if($silentlyEndScript -eq "true"){
+	$silentlyEndScript = $true
+}
+$deleteOldLogs = $h.Get_Item("confDeleteOldLogs")
+if($silentlyEndScript -eq "true"){
+	$silentlyEndScript = $true
+}
 
-$veraCryptBackup = $false
-$veraCryptSource = "C:\Users\Test\Downloads\page2.backup"
+$veraCryptBackup = $h.Get_Item("confVeraCryptBackup")
+if($silentlyEndScript -eq "true"){
+	$silentlyEndScript = $true
+}
+$veraCryptSource = $h.Get_Item("confVeraCryptSource")
 
 
 $date = Get-Date -UFormat "%Y%m%d"
@@ -18,26 +29,6 @@ function robocopygeneral($sourcepath, $destinationpath)
 	$backupname = $($backuplocation.Replace("\","")).Replace(":","")
 	$logpath = $($logpath + $date + "Backup(" + $sourcename + "to" + $backupname + ").log")
     robocopy $sourcepath $destinationpath /MIR /Z /MT:16 /Log:$logpath /NP /TEE
-}
-
-function getvalideInput ($inputmessage, $ControllRegex) 
-{
-	$invalidInput = $true
-	while ($invalidInput) {
-		$input = Read-Host -Prompt $inputmessage
-		try
-		{
-			$input.ToLower
-		}catch{}
-		if ($input -match $ControllRegex) 
-		{
-			$invalidInput = $false
-		}else
-		{
-			Write-Host "Please make a valide choice!"
-		}
-	}
-	return $input
 }
 
 function decryptVeraCrypt ($veraCryptSource, $backuplocation){
@@ -66,8 +57,18 @@ if (Test-Path $backuplocation){
 		Write-Host "The following backups exist on" $backuplocation":"
 		$folders = Get-ChildItem $backuplocation| Sort-Object LastWriteTime -Descending
 		
+		#get counters
+		$counteryear = 0
+		$contermonth = 0
 		foreach ($folder in $folders) {
-			Write-Host $folder
+			if($folder -like $($date[0] + $date[1] + $date[2] + $date[3] + "*"))
+			{
+				$counteryear++
+			}
+			if($folder -like $($date[0] + $date[1] + $date[2] + $date[3] + $date[4] + $date[5] + "*"))
+			{
+				$countermonth++
+			}
 		}
 	}catch #first backup
 	{
@@ -75,76 +76,49 @@ if (Test-Path $backuplocation){
 		Write-Host "This is the first backup."
 	}
 	
-	$loop = $true
-	while ($loop){
-		Write-Host "_______________________________________________________________"
-		Write-Host "Choose if you want to do a full backup or a differential backup."
-		Write-Host "[If you need help: HELP | To exit: EXIT | To list" $sourcelocation": LIST ]" 
-		#| To choose specific folder e.g.: FULL 001 or 200
-		$input = getvalideInput "FULL or DIFF" "full|diff|help|exit|list"
-		Write-Host ""
+	#Ensure that there are only three backups of this month
+	if($counteryear -gt 3){
+		Remove-Item -path $($backuplocation + "\" + $folders[3])  
+	}
+	foreach ($folder in $folders) 
+	{
+		Write-Host $folder
+	}
+
+	#decide if full or diff
+	if($countermonth -eq 1)
+	{
+		Write-Host "Do a differential backup"
+		$Stopwatch = New-Object System.Diagnostics.Stopwatch
+		$Stopwatch.Start()
 		
-		#FULL
-		if ($input -eq "full")
-		{
-			$loop = $false #ending of while loop
-			
-			$Stopwatch = New-Object System.Diagnostics.Stopwatch
-			$Stopwatch.Start()
-
-			#deleting old logs
-			if($deleteOldLogs)
-			{
-				Remove-Item -path $($logpath + "*") -recurse
-			}
-
-            robocopygeneral $sourcelocation $lastbackuplocation
+		$lastbackuplocation = $backuplocation + $folders[0]
+		
+		robocopygeneral $sourcelocation $lastbackuplocation
+		
+		
+		if ($lastbackuplocation -eq $($backuplocation + $date)){
+			Write-Host "No name changes, because there was a backup of today"
+		}else{
+			Rename-Item -Path $lastbackuplocation -NewName $date
 		}
-		#DIFF
-		elseif ($input -eq "diff")
-		{
-			$loop = $false
 
-			$Stopwatch = New-Object System.Diagnostics.Stopwatch
-			$Stopwatch.Start()
-			
-			$lastbackuplocation = $backuplocation + $folders[0]
-			
-			robocopygeneral $sourcelocation $lastbackuplocation
-			
-			
-			if ($lastbackuplocation -eq $($backuplocation + $date)){
-				Write-Host "No name changes, because there was a backup of today"
-			}else{
-				Rename-Item -Path $lastbackuplocation -NewName $date
-			}
-			
-			#displayStopWatch
-			
-		
-		}#HELP
-		elseif ($input -eq "help")
+	}elseif($contermonth -eq 0)
+	{
+		Write-Host "Do a full backup"
+		$Stopwatch = New-Object System.Diagnostics.Stopwatch
+		$Stopwatch.Start()
+
+		#deleting old logs
+		if($deleteOldLogs)
 		{
-			$loop = $true
-			Write-Host "FULL: A full backup means that " + $sourcepath + " gets a new backup folder in " + $backuplocation
-			Write-Host "DIFF: A differential backup means that " + $sourcepath + " get only mirrowed to the last backup folder in W:\"
-		
-		
-		}#Liste
-		elseif ($input -eq "list")
-		{
-			$loop = $true
-			$folders = Get-ChildItem $sourcelocation | Sort-Object LastWriteTime -Descending
-			Write-Host "The following folders exist in" $sourcelocation
-			foreach ($folder in $folders) {
-				Write-Host $folder
-			}
-		
-		}#CANCEL
-		elseif ($input -eq "exit")
-		{
-			$loop = $false
+			Remove-Item -path $($logpath + "*") -recurse
 		}
+
+		robocopygeneral $sourcelocation $lastbackuplocation
+	}else
+	{
+		Write-Host "Error: Wasn't able to automatically choose what to do."
 	}
 
 }else 
